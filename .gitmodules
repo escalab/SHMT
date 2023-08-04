@@ -1,0 +1,6 @@
+[submodule "libedgetpu"]
+	path = libedgetpu
+	url = git@github.com:jk78346/libedgetpu.git
+[submodule "edgetpu"]
+	path = edgetpu
+	url = git@github.com:jk78346/edgetpu.git
