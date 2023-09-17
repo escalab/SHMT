@@ -81,7 +81,7 @@ __device__ inline float cndGPU(float d)
 
 __device__ inline void BlackScholesBodyGPU(
     float &CallResult,
-    //float &PutResult,
+    float &PutResult,
     float S, //Stock price
     float X, //Option strike
     float T, //Option years
@@ -102,13 +102,13 @@ __device__ inline void BlackScholesBodyGPU(
     //Calculate Call and Put simultaneously
     expRT = __expf(- R * T);
     CallResult = S * CNDD1 - X * expRT * CNDD2;
-    //PutResult  = X * expRT * (1.0f - CNDD2) - S * (1.0f - CNDD1);
+    PutResult  = X * expRT * (1.0f - CNDD2) - S * (1.0f - CNDD1);
 }
 
 __launch_bounds__(128)
 __global__ void BlackScholesGPU(
     float2 * __restrict d_CallResult,
-    //float2 * __restrict d_PutResult,
+    float2 * __restrict d_PutResult,
     float2 * __restrict d_StockPrice,
     float2 * __restrict d_OptionStrike,
     float2 * __restrict d_OptionYears,
@@ -128,8 +128,10 @@ __global__ void BlackScholesGPU(
     if (opt < (optN / 2))
     {
         float callResult1, callResult2;
+        float putResult1, putResult2;
         BlackScholesBodyGPU(
             callResult1,
+            putResult1,
             d_StockPrice[opt].x,
             d_OptionStrike[opt].x,
             d_OptionYears[opt].x,
@@ -138,6 +140,7 @@ __global__ void BlackScholesGPU(
         );
         BlackScholesBodyGPU(
             callResult2,
+            putResult2,
             d_StockPrice[opt].y,
             d_OptionStrike[opt].y,
             d_OptionYears[opt].y,
@@ -145,6 +148,7 @@ __global__ void BlackScholesGPU(
             Volatility
         );
         d_CallResult[opt] = make_float2(callResult1, callResult2);
+        d_PutResult[opt] = make_float2(putResult1, putResult2);
      }
 }
 
@@ -161,21 +165,21 @@ void HLOPGpu::blackscholes_2d(KernelParams& kernel_params, void** in_img, void**
     
     float
     *h_CallResultGPU = (float*)*out_img,
-    //*h_PutResultGPU = &((float*)*out_img)[OPT_N],
+    *h_PutResultGPU = &((float*)*out_img)[OPT_N],
     *h_StockPrice = (float*)*in_img,
     *h_OptionStrike = &((float*)*in_img)[OPT_N],
     *h_OptionYears = &((float*)*in_img)[2 * OPT_N];
     
     float
     *d_CallResult,
-    //*d_PutResult,
+    *d_PutResult,
     *d_StockPrice,
     *d_OptionStrike,
     *d_OptionYears;
 
     //printf("...allocating GPU memory for options.\n");
     checkCudaErrors(cudaMalloc((void **)&d_CallResult,   OPT_SZ));
-    //checkCudaErrors(cudaMalloc((void **)&d_PutResult,    OPT_SZ));
+    checkCudaErrors(cudaMalloc((void **)&d_PutResult,    OPT_SZ));
     checkCudaErrors(cudaMalloc((void **)&d_StockPrice,   OPT_SZ));
     checkCudaErrors(cudaMalloc((void **)&d_OptionStrike, OPT_SZ));
     checkCudaErrors(cudaMalloc((void **)&d_OptionYears,  OPT_SZ));
@@ -190,7 +194,7 @@ void HLOPGpu::blackscholes_2d(KernelParams& kernel_params, void** in_img, void**
     {
         BlackScholesGPU<<<DIV_UP((OPT_N/2), 128), 128/*480, 128*/>>>(
             (float2 *)d_CallResult,
-            //(float2 *)d_PutResult,
+            (float2 *)d_PutResult,
             (float2 *)d_StockPrice,
             (float2 *)d_OptionStrike,
             (float2 *)d_OptionYears,
@@ -203,12 +207,12 @@ void HLOPGpu::blackscholes_2d(KernelParams& kernel_params, void** in_img, void**
     checkCudaErrors(cudaDeviceSynchronize());
 
     checkCudaErrors(cudaMemcpy(h_CallResultGPU, d_CallResult, OPT_SZ, cudaMemcpyDeviceToHost));
-    //checkCudaErrors(cudaMemcpy(h_PutResultGPU,  d_PutResult,  OPT_SZ, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_PutResultGPU,  d_PutResult,  OPT_SZ, cudaMemcpyDeviceToHost));
 
     checkCudaErrors(cudaFree(d_OptionYears));
     checkCudaErrors(cudaFree(d_OptionStrike));
     checkCudaErrors(cudaFree(d_StockPrice));
-    //checkCudaErrors(cudaFree(d_PutResult));
+    checkCudaErrors(cudaFree(d_PutResult));
     checkCudaErrors(cudaFree(d_CallResult));
 }
 

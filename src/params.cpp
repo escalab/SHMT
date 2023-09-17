@@ -18,6 +18,8 @@ Params::Params(
 	    			100:((test_mode == "quality")?1:0);
     if(app_name == "fft_2d")
 	    this->iter = 1; // to avoid OOM
+    if(app_name == "blackscholes_2d")
+        this->iter = 30; // to avoid hanging
     this->input_data_path = input_data_path;
 
     assert(problem_size >= block_size);

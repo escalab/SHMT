@@ -33,7 +33,8 @@ int main(int argc, char* argv[]){
     std::string test_mode     = argv[idx++];
     std::string baseline_mode = argv[idx++];
     std::string proposed_mode = argv[idx++];
-    
+    baseline_mode = (app_name == "blackscholes_2d")?"g_p":baseline_mode;
+
     std::string testing_img_path = 
         (argc == 8)?argv[idx++]:"../data/lena_gray_2Kx2K.bmp";
     std::string testing_img_file_name = 
@@ -80,21 +81,39 @@ int main(int argc, char* argv[]){
                         &output_array_baseline,
                         &output_array_proposed);
 
+    if(app_name == "blackscholes_2d"){
+    // Start to run proposed version of the application's implementation
+    	std::cout << "run experiment... " << proposed_mode << std::endl; 
+    	proposed_device_sequence = proposed_vops.run_kernel(proposed_mode,
+                                                        proposed_params,
+                                                        input_array,
+                                                        output_array_proposed,
+                                                        proposed_time_breakdown);
+    
     // Start to run baseline version of the application's implementation.
-    std::cout << "run baseline... " << baseline_mode << std::endl; 
-    baseline_device_sequence = baseline_vops.run_kernel(baseline_mode,
+    	std::cout << "run baseline... " << baseline_mode << std::endl; 
+    	baseline_device_sequence = baseline_vops.run_kernel(baseline_mode,
+                                                        baseline_params,
+                                                        input_array,
+                                                        output_array_baseline,
+                                                        baseline_time_breakdown);
+    }else{
+    // Start to run baseline version of the application's implementation.
+    	std::cout << "run baseline... " << baseline_mode << std::endl; 
+    	baseline_device_sequence = baseline_vops.run_kernel(baseline_mode,
                                                         baseline_params,
                                                         input_array,
                                                         output_array_baseline,
                                                         baseline_time_breakdown);
     
     // Start to run proposed version of the application's implementation
-    std::cout << "run experiment... " << proposed_mode << std::endl; 
-    proposed_device_sequence = proposed_vops.run_kernel(proposed_mode,
+    	std::cout << "run experiment... " << proposed_mode << std::endl; 
+    	proposed_device_sequence = proposed_vops.run_kernel(proposed_mode,
                                                         proposed_params,
                                                         input_array,
                                                         output_array_proposed,
                                                         proposed_time_breakdown);
+    }
 
     // convert device sequence type 
     std::vector<int> proposed_device_type;
