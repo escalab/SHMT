@@ -1,6 +1,6 @@
 # SHMT
 The Simultaneous and Heterogenous Multithreading project (Jetson nano + edgeTPU). \
-This project contains two major parts: kernel model training scheme and the acutal partition execution scheme. These two schemes require two different cooresponding platforms. 
+This project contains two major parts: kernel model training scheme and the actual partition execution scheme. These two schemes require two different corresponding platforms. 
 
 [![DOI](https://zenodo.org/badge/674087894.svg)](https://zenodo.org/badge/latestdoi/674087894)
 
@@ -24,7 +24,7 @@ sudo apt-get update
 sudo apt install docker.io
 sudo snap install docker
 ```
-Check docker verison
+Check docker version
 ```
 docker --version
 ```
